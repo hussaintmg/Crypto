@@ -8,3 +8,4 @@ apache-airflow
 sqlalchemy
 schedule
 python-dateutil
+altair
