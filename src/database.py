@@ -172,3 +172,16 @@ class DatabaseManager:
         if self.connection_pool:
             self.connection_pool.closeall()
             logger.info("All database connections closed")
+
+if __name__ == "__main__":
+    try:
+        import streamlit as st
+        st.warning("⚠️ You are running 'src/database.py'. Please run 'streamlit_app.py' instead.")
+        st.info("💡 To fix: Change the 'Main file path' in Streamlit Cloud settings to 'streamlit_app.py'")
+        
+        if st.button("🚀 Load Dashboard Now"):
+            from src.dashboard import CryptoDashboard
+            dashboard = CryptoDashboard()
+            dashboard.run()
+    except Exception:
+        pass

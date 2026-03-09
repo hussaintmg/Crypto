@@ -10,6 +10,16 @@ class Config:
     DB_NAME = os.getenv('DB_NAME', 'crypto_db')
     DB_USER = os.getenv('DB_USER', 'postgres')
     DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')
+    DATABASE_URL = os.getenv('DATABASE_URL')
+    
+    # Try to get from streamlit secrets if not in env
+    try:
+        import streamlit as st
+        # This only works in a Streamlit context
+        if hasattr(st, "secrets") and "DATABASE_URL" in st.secrets:
+            DATABASE_URL = st.secrets["DATABASE_URL"]
+    except Exception:
+        pass
     
     # API configuration
     COINGECKO_API_URL = "https://api.coingecko.com/api/v3/coins/markets"
