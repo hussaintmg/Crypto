@@ -35,9 +35,12 @@ class ETLPipeline:
         self.loader = CryptoLoader()
         self.is_running = True
         
-        # Setup signal handlers for graceful shutdown
-        signal.signal(signal.SIGINT, self.signal_handler)
-        signal.signal(signal.SIGTERM, self.signal_handler)
+        # Setup signal handlers for graceful shutdown (Safe for Streamlit/Threads)
+        try:
+            signal.signal(signal.SIGINT, self.signal_handler)
+            signal.signal(signal.SIGTERM, self.signal_handler)
+        except ValueError:
+            logger.warning("Could not set signal handlers. This is expected when running in a thread or some cloud environments.")
     
     def signal_handler(self, signum, frame):
         """Handle shutdown signals"""
