@@ -259,11 +259,13 @@ class CryptoDashboard:
                     # Image + Name
                     asset_html = f'''
                     <div style="display: flex; align-items: center;">
+                        <img src="{row['image_url']}" class="asset-thumb">
                         <span style="font-weight: 600;">{row['name']}</span>
                         <span style="color: #A0AEC0; margin-left: 8px; font-size: 0.8em;">{row['symbol'].upper()}</span>
                     </div>
                     '''
                     c[1].markdown(asset_html, unsafe_allow_html=True)
+
                     
                     price_fmt = f"${price:,.2f}" if price >= 1 else f"${price:,.6f}"
                     c[2].write(price_fmt)
