@@ -21,6 +21,11 @@ class Config:
     except Exception:
         pass
     
+    # If using Supabase, it is highly recommended to use the:
+    # 1. 'Transaction Bouncer' connection string (usually port 6543)
+    # 2. Or the Session Bouncer (port 5432)
+    # This prevents 'Cannot assign requested address' errors on environments without IPv6 support.
+    
     # API configuration
     COINGECKO_API_URL = "https://api.coingecko.com/api/v3/coins/markets"
     API_PARAMS = {

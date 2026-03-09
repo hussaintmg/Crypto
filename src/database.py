@@ -25,28 +25,35 @@ class DatabaseManager:
     def _create_connection_pool(self):
         """Create a connection pool with fallback to Config values if DATABASE_URL is not set"""
         try:
-            database_url = os.getenv('DATABASE_URL')
+            # First priority: Config.DATABASE_URL (which has streamlit secrets support)
+            database_url = Config.DATABASE_URL
             
             if database_url:
-                logger.info("Using DATABASE_URL for connection pool")
+                logger.info(f"Using DATABASE_URL for connection pool: {database_url.split('@')[-1]}") # Log only host part
                 self.connection_pool = pool.SimpleConnectionPool(
                     1, 20,
                     database_url
                 )
             else:
-                logger.info("Using individual config parameters for connection pool")
+                logger.info(f"Using individual config parameters for connection pool. Host: {Config.DB_HOST}")
                 self.connection_pool = pool.SimpleConnectionPool(
                     1, 20,
                     host=Config.DB_HOST,
                     port=Config.DB_PORT,
                     database=Config.DB_NAME,
                     user=Config.DB_USER,
-                    password=Config.DB_PASSWORD
+                    password=Config.DB_PASSWORD,
+                    connect_timeout=10 # Added timeout for cloud environments
                 )
             logger.info("Database connection pool created successfully")
         except Exception as e:
-            logger.error(f"Error creating connection pool: {e}")
+            logger.error(f"Error creating connection pool ({type(e).__name__}): {e}")
+            if "Cannot assign requested address" in str(e):
+                logger.warning("TIP: This usually means your environment doesn't support IPv6. "
+                               "Try using your Supabase 'Transaction Bouncer' connection string (usually port 6543) "
+                               "or check if IPv6 is enabled on your host.")
             raise
+
 
     
     @contextmanager
