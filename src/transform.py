@@ -112,8 +112,10 @@ class CryptoTransformer:
             'price_change_24h': 'price_change_24h',
             'market_cap_rank': 'market_cap_rank',
             'volatility_score': 'volatility_score',
-            'extracted_at': 'extracted_at'
+            'extracted_at': 'extracted_at',
+            'image': 'image_url'
         }
+
         
         # Select and rename columns
         available_cols = [col for col in field_mapping.keys() if col in df.columns]

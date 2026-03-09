@@ -86,7 +86,8 @@ class CryptoExtractor:
             return False
         
         required_fields = ['id', 'symbol', 'name', 'current_price', 
-                          'market_cap', 'total_volume', 'price_change_percentage_24h']
+                          'market_cap', 'total_volume', 'price_change_percentage_24h', 'image']
+
         
         for item in data:
             if not all(field in item for field in required_fields):

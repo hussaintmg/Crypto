@@ -26,8 +26,8 @@ jobs:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
       run: |
         python -c "
-import sys
-sys.path.append('.')
-from src.etl_pipeline import ETLPipeline
-pipeline = ETLPipeline()
-pipeline.run_etl()"
+        import sys
+        sys.path.append('.')
+        from src.etl_pipeline import ETLPipeline
+        pipeline = ETLPipeline()
+        pipeline.run_etl()"

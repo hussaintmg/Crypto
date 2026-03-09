@@ -26,6 +26,7 @@ class CryptoAnalyzer:
                 symbol,
                 price_change_24h,
                 current_price,
+                image_url,
                 extracted_at
             FROM crypto_market
             WHERE extracted_at >= NOW() - INTERVAL '1 hour'
@@ -35,7 +36,8 @@ class CryptoAnalyzer:
             name,
             symbol,
             price_change_24h,
-            current_price
+            current_price,
+            image_url
         FROM latest_data
         WHERE price_change_24h IS NOT NULL
         ORDER BY price_change_24h DESC
@@ -55,6 +57,10 @@ class CryptoAnalyzer:
                 market_cap,
                 market_cap_rank,
                 current_price,
+                price_change_24h,
+                total_volume,
+                volatility_score,
+                image_url,
                 extracted_at
             FROM crypto_market
             WHERE extracted_at >= NOW() - INTERVAL '1 hour'
@@ -65,13 +71,18 @@ class CryptoAnalyzer:
             symbol,
             market_cap,
             market_cap_rank,
-            current_price
+            current_price,
+            price_change_24h,
+            total_volume,
+            volatility_score,
+            image_url
         FROM latest_data
         ORDER BY market_cap_rank
         LIMIT 5;
         """
         
         return self.db_manager.execute_query(query)
+
     
     def get_average_market_cap(self):
         """Get average market cap of all cryptocurrencies"""
@@ -176,18 +187,30 @@ class CryptoAnalyzer:
     def get_price_trends(self, hours=24):
         """Get price trends for the last X hours"""
         query = """
-        WITH hourly_prices AS (
+        WITH hourly_raw AS (
             SELECT 
                 coin_id,
                 name,
                 symbol,
                 date_trunc('hour', extracted_at) as hour,
-                AVG(current_price) as avg_price,
-                FIRST_VALUE(current_price) OVER (PARTITION BY coin_id, date_trunc('hour', extracted_at) ORDER BY extracted_at) as hour_open,
-                LAST_VALUE(current_price) OVER (PARTITION BY coin_id, date_trunc('hour', extracted_at) ORDER BY extracted_at ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as hour_close
+                current_price,
+                extracted_at,
+                ROW_NUMBER() OVER (PARTITION BY coin_id, date_trunc('hour', extracted_at) ORDER BY extracted_at ASC) as row_asc,
+                ROW_NUMBER() OVER (PARTITION BY coin_id, date_trunc('hour', extracted_at) ORDER BY extracted_at DESC) as row_desc
             FROM crypto_market
             WHERE extracted_at >= NOW() - INTERVAL '%s hours'
-            GROUP BY coin_id, name, symbol, date_trunc('hour', extracted_at), extracted_at
+        ),
+        hourly_stats AS (
+            SELECT 
+                coin_id,
+                name,
+                symbol,
+                hour,
+                AVG(current_price) as avg_price,
+                MAX(CASE WHEN row_asc = 1 THEN current_price END) as hour_open,
+                MAX(CASE WHEN row_desc = 1 THEN current_price END) as hour_close
+            FROM hourly_raw
+            GROUP BY coin_id, name, symbol, hour
         )
         SELECT 
             name,
@@ -196,12 +219,16 @@ class CryptoAnalyzer:
             avg_price,
             hour_open,
             hour_close,
-            ((hour_close - hour_open) / hour_open * 100) as hourly_change_percent
-        FROM hourly_prices
+            CASE 
+                WHEN hour_open > 0 THEN ((hour_close - hour_open) / hour_open * 100) 
+                ELSE 0 
+            END as hourly_change_percent
+        FROM hourly_stats
         ORDER BY hour DESC, name;
         """
         
         return self.db_manager.execute_query(query, (hours,))
+
     
     def get_market_summary(self):
         """Get comprehensive market summary"""
@@ -227,9 +254,11 @@ class CryptoAnalyzer:
                 AVG(market_cap) as avg_market_cap,
                 SUM(total_volume) as total_volume_24h,
                 AVG(price_change_24h) as avg_price_change,
+                AVG(current_price) as avg_price,
                 PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price_change_24h) as median_price_change,
                 SUM(CASE WHEN price_change_24h > 0 THEN 1 ELSE 0 END) as gainers_count,
                 SUM(CASE WHEN price_change_24h < 0 THEN 1 ELSE 0 END) as losers_count
+
             FROM latest_data
         ),
         top_gainer AS (

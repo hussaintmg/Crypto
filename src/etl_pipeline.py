@@ -14,6 +14,7 @@ from src.load import CryptoLoader
 from config import Config
 
 # Setup logging
+os.makedirs(Config.LOG_PATH, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -22,6 +23,7 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+
 logger = logging.getLogger(__name__)
 
 class ETLPipeline:
